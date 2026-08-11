@@ -1,0 +1,103 @@
+---
+title: "SimpleData_Wrangling"
+author: "Kaushik Surej"
+date: "2026-08-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Housekeeping
+## Inventory every active object currently residing in session RAM
+
+objects()
+rm(list = ls())
+
+this line shows that the globabl session that was previously ran has a completely vacant memory 
+
+```{r}
+install.packages("tidyverse")
+install.packages("readxl")
+
+library(tidyverse)
+library(readxl)
+```
+```{r}
+# installing an extra package
+install.packages("here")
+library(here)
+```
+# Reading the Mangrove Data
+```{r}
+mangrove_data <- read_csv(file= here::here("data/mangrove_survey_raw.csv"))
+```
+
+Let's try running a function called "args()" within our Rmd file. This function helps us represent the arguments names we have within the dataset and also provide default values across any given function.
+```{r}
+mangrove_data <- read_csv(
+  here::here("data/mangrove_survey_raw.csv"),
+  skip = 5, # skip the first 5 lines of field notes 
+  na = c(".", "NA", "9999", "ND", "blank")) 
+```
+Let's start working with the available "Penguin Dataset"
+
+# Penguins- Species, Bill Length and Bill Depth- Variables to be looked at and classified
+
+Install the palmerpenguins packages first
+```{r}
+install.packages("palmerpenguins")
+library(palmerpenguins)
+```
+Loading the data package into an active memory management unti
+```{r}
+data("penguins")
+```
+
+Examining the structure of the dataset that we have in hand
+```{r}
+glimpse(penguins)
+str(penguins)
+```
+
+Generation of an exploratory summary matrix
+```{r}
+summary(penguins)
+```
+Vertically slice the specific set of morphometric variables in play
+```{r}
+morphology_metrics <- select(penguins, species, bill_length_mm, bill_depth_mm, body_mass_g)
+
+glimpse(morphology_metrics)
+```
+For a simple data wrangling such as the one that we are working with at the moment, let's run a set of operators and functions within the Rmd window
+
+```{r}
+spatial_block <- select(penguins, species:island) #Running the colon operator
+```
+
+```{r}
+clean_scientific_fields <- select(penguins, -year) #Discarding logistic tracking attributes
+```
+
+```{r}
+adelie_cohort <- filter(penguins, species=="Adelie") #Isolating observations that belong to a single target group
+```
+
+```{r}
+heavy_penguins <- filter(penguins, body_mass_g > 4500) #Analyzing the penguin dataset to observe the presence of penguin groups or species that are heavier than 4500 g
+
+biscoe_gentoo <- filter(penguins, species == "Gentoo" & island == "Biscoe") #Preserving the records of the Gentoo penguin population found across Biscoe Island
+
+sub_islands <- filter(penguins, island %in% c("Dream", "Torgersen")) #Sifting through the penguins record match multiple targeting flags within an explicit set such as the overall penguin dataset 
+
+lightest_first <- arrange(penguins, body_mass_g) #Sorting penguins by ascending body mass
+heaviest_first <- arrange(penguins, desc(body_mass_g)) #Sorting penguins in descending order using the desc() layout wrapper
+
+stratified_morphology <- arrange(penguins, species, desc(bill_length_mm)) #Execution of a nested sorting criteria: Grouping and classification carried out using classes such as species, after which it is sorted using descending bill length
+
+penguins_final <- penguins |>
+  mutate(bill_ratio = bill_length_mm / bill_depth_mm) |>
+  filter(species == "Adelie")
+```
