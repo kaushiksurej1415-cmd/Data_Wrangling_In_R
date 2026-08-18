@@ -1,0 +1,137 @@
+---
+title: "Keystone_Species"
+author: "Kaushik Surej"
+date: "2026-08-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This project was procured from a former PhD student and the work that she had carried out within the Ross River Estuary were divided into four separate datasheets, observing the ecological diversity of the water body in sight
+
+The major issue that the project faces is in the form of how the data were compiled, because of which RStudio found it difficult to classify the data, due to the spreadsheets which contained all of the data points not adhering to the software's case sensitive nature
+
+# Intorduction to Complex Data Wrangling
+## Step 1: Integration of all of the available files into an Rmd window
+
+Install and load a bunch of packages first
+```{r warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(lubridate)
+library(here)
+```
+Observing the catch data that has been provided
+
+```{r}
+library(readxl)
+
+catch1 <- read_excel(
+  "C:/Users/jd147368/Documents/R4MarineScience/data/workshop2/estuary_catch_log.xlsx",
+  sheet = "Lower_ross"
+)
+
+catch2 <- read_excel(
+  "C:/Users/jd147368/Documents/R4MarineScience/data/workshop2/estuary_catch_log.xlsx",
+  sheet = 2
+)
+
+catch3 <- read_excel(
+  "C:/Users/jd147368/Documents/R4MarineScience/data/workshop2/estuary_catch_log.xlsx",
+  sheet = 3
+)
+
+catch4 <- read_excel(
+  "C:/Users/jd147368/Documents/R4MarineScience/data/workshop2/estuary_catch_log.xlsx",
+  sheet = 4
+)
+```
+
+Carrying out an inspection to see if the tabs that have been loaded are the ones that are needed for the functioning of the project
+```{r}
+catch1
+catch2
+catch3
+catch4
+```
+
+## Binding all of the rows together along with the cleaning of the environment
+
+The processes that have been mentioned will help in securing a data sheet that is clean and a bit more simpler to classify and work with
+```{r}
+catch_data <- bind_rows(catch1, catch2, catch3, catch4) # binding all of the rows within the catch log file
+
+rm(catch1, catch2, catch3, catch4) # cleaning up the environment 
+```
+
+Running a few preliminary checks on the dataset that has just been cleaned 
+```{r}
+catch_data
+head(catch_data)
+glimpse(catch_data)
+str(catch_data)
+```
+
+Due to the system not having the ability to work and load the number of sites and species that are in question, running a "distinct()" function would help in gaining a bit more background information on the study that has been done
+
+```{r}
+catch_data |> 
+  distinct(site)
+
+catch_data |> 
+  distinct(species)
+```
+Have a look at what was done above, the previous chunk helped load the "distinct()" function to provide answers on the species and the sites that have been written within the catch log file
+
+Load the metadata now
+
+```{r}
+metadata <- read_csv("C:/Users/jd147368/Documents/R4MarineScience/data/workshop2/estuary_metadata.csv")
+```
+Let's know inspect the metadata, similar to how the primary catch dataset was inspected
+```{r}
+head(metadata)
+glimpse(metadata)
+```
+Due to the site names being all over the place within the metadata file as well, let's standardize the data her as well
+
+## Fixing the site names and converting all of the given characters to factor in the variables
+```{r}
+catch_data <- catch_data |>
+  mutate(
+    site = str_to_lower(str_trim(site)),
+    site = str_replace_all(site, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+
+metadata <- metadata |>
+  mutate(
+    site_name = str_to_lower(str_trim(site_name)),
+    site_name = str_replace_all(site_name, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+```
+
+
+Rechecking the changed site names 
+```{r}
+#catch_data |> 
+ # str()
+# catch_data |> 
+#   distinct(site)
+str(metadata)
+```
+
+```{r}
+setwd("C:/Users/jd147368/Documents/R4MarineScience")
+```
+
+
+
+
