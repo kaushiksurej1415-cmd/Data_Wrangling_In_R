@@ -121,10 +121,10 @@ metadata <- metadata |>
 
 Rechecking the changed site names 
 ```{r}
-#catch_data |> 
- # str()
-# catch_data |> 
-#   distinct(site)
+catch_data |> 
+ str()
+ catch_data |> 
+  distinct(site)
 str(metadata)
 ```
 
@@ -132,6 +132,72 @@ str(metadata)
 setwd("C:/Users/jd147368/Documents/R4MarineScience")
 ```
 
+## Loading Taxonomic Dictionary
+```{r load_species_dictionary}
+species_dict <- read_csv("../Data_Wrangling_In_R/data/species_dictionary.csv")
+# Check
+head(species_dict)
+```
+Species name and common names; Standardized to match the catch log data
+```{r fixing the species names}
+
+catch_data <- catch_data |>
+  mutate(
+    species = str_to_lower(str_trim(species)),
+    species = str_replace_all(species, " ", "_")
+  )
+```
+
+The dataset that we have been working on still shows the presence of common name underneath the species name column within the dataset
+
+Create a new variable called "scientific_name" within the taxonomic dictionary
+```{r}
+catch_data <- catch_data |>
+  mutate(common_name = species) |>
+  left_join(species_dict, by = join_by(common_name))
+```
+
+Rechecking our catch log to aee if the species and site names have been fixed
+```{r}
+glimpse(catch_data)
+```
+Now that the aforementioned inconsistencies have been fixed, add the dataset which shows the presence of the sonde/sensor information
+# Load the Sonde Data
+```{r}
+sensor_raw <- read_csv(here::here("data", "estuary_sonde_data.csv")) #the code that was run within the particular had to be changed because the diw_sensor.R was moved from the "C:\Users\jd147368\Documents\R4MarineScience" pathway to the "C:\Users\jd147368\Documents\Data_Wrangling_In_R\data" pathway
+```
+# Check sensor data
+```{r}
+head(sensor_raw)
+str(sensor_raw)
+glimpse(sensor_raw)
+summary(sensor_raw)
+```
+# Clean the sensor data
+```{r}
+sensor_data <- 
+  sensor_raw |>
+  mutate(
+    # Parse the messy character string (Day/Month/Year Hour:Minute)
+    datetime = dmy_hm(timestamp),
+    # Convert the -999.0 hardware error to a true NA
+    turbidity = na_if(turbidity, -999),
+    # Convert negative salinity values to na
+    salinity = ifelse(salinity < 0, NA, salinity),
+  )
+```
 
 
+For one final time, let's run a few codes which will help us summarize the 15 minute sensor/sonde data into data that is collected on a regular basis
+```{r}
+sensor_daily <- 
+  sensor_data |>
+  mutate(date = as_date(floor_date(datetime, "day"))) |>
+  group_by(site, date) |>
+  summarise(
+    mean_temp = mean(temperature, na.rm = TRUE),
+    mean_salinity = mean(salinity, na.rm = TRUE),
+    mean_turbidity = mean(turbidity, na.rm = TRUE),
+    .groups = "drop")
+```
 
