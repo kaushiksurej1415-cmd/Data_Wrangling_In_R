@@ -201,3 +201,71 @@ sensor_daily <-
     .groups = "drop")
 ```
 
+## SONDE DATA; Notes
+- the sonde data was collected for a span of 15 minutes over a period of 30 sampling days across 4 different sites. The script sourced above turned into one which collected data on a day-to-day basis, with the outliers being removed
+- 3 different environmental sample variables were measured: "temperature, salinity, turbidity"
+- To investigate the effect of all three variables on the abundance of the different species of fish which were mentioned within the catch log dataset, more research will have to be carried out along with the structuring of a new hypotheses
+
+### Joining the catch data with the metadata and the sensor data
+```{r joining-all-of-the-available-data}
+catch_data_final <- catch_data |>
+  left_join(metadata, by = join_by(site == site_name)) |>
+  left_join(sensor_daily, by = join_by(site, date))
+```
+
+See if your conjoined dataset has loaded itself into your system
+```{r}
+glimpse(catch_data_final)
+```
+We need a total row count of 480 and not 427
+
+The only reason why the number 427 showed up was because of the fact that there were zero counts for certain species at different sites and this is where our final data wrangling steps come into play.
+
+This will now be wrangled into a complete dataset with 480 rows, where the zero counts will be represented as "0" rather than "NA" 
+
+## Wrangling the final dataset in hand
+```{r wrnagling the final zeroes}
+catch_data_final <- 
+catch_data_final |> 
+  complete(
+    nesting(site, date, 
+           # lat, lon, 
+            zone, mean_temp, mean_salinity, mean_turbidity),
+    scientific_name
+  ) |>
+  mutate(
+    # Convert the resulting NA counts to 0
+    count = coalesce(count, 0)
+  )
+```
+
+#-------------- MAJOR DATA WRANGLING PROCESSES HAVE NOW ENDED !!!! ---------------
+
+## Hypotheses observation in relation to the species ecology across the Ross River estuary gradient
+
+### Check if there are any environmental variability across the different zones 
+
+#### SALINITY
+```{r}
+# Let's make a table
+sal_sum <- 
+  catch_data_final |>
+  group_by(zone) |>
+  summarise(
+   # sem_salinity = sd(mean_salinity) / sqrt(n()),
+    sd_salinity = sd(mean_salinity, na.rm = TRUE),
+    median_salinity = median(mean_salinity, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# And from this a plot
+sal_sum |> 
+  ggplot(aes(x = zone, y = median_salinity)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = median_salinity - sd_salinity, ymax = median_salinity + sd_salinity), width = 0.2) +
+  theme_minimal() +
+  labs(#title = "Median Salinity by Zone with Standard Deviation Error Bars",
+       x = "Zone",
+       y = "Median Salinity (ppt)")
+```
+
