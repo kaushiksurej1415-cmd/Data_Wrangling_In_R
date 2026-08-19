@@ -181,3 +181,139 @@ df |>
   mutate(x = NA, y = NA, z = NA) # Combining the results that we wanted and generating an empty dataframe with only NA values at the end of the day
 ```
 
+# PIVOTING EXERCISE: Palmer Penguins Dataset
+
+## Lengthening using pivot_longer() with facet_wrap() in play
+```{r}
+# install.packages("palmerpenguins")
+library(palmerpenguins)
+
+## Creating a long version of the penguin dataset
+
+penguins_long <- penguins |>
+  pivot_longer(
+    cols = c(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g),
+    names_to = "measurement_type",
+    values_to = "value"
+  )
+head(penguins_long)
+
+## Running ggplot2 based on the 6*6 Palmer Penguin that was created
+penguins_long |>
+  drop_na(value) |>
+  ggplot(aes(x = value, fill = species)) +
+  geom_histogram(bins = 30, alpha = 0.7, colour = "black") +
+  facet_wrap(~ measurement_type, scales = "free_x") +
+  theme_minimal() +
+  labs(
+    title = "Morphometric distributions across penguin species",
+    x = "Measurement value",
+    y = "Frequency"
+  )
+```
+
+## Widening the data using "pivot_wider()"
+### Mean body mass for each species within each island calculated using "group_by()" and "summarise()"
+
+```{r}
+mass_summary <- penguins |>
+  drop_na(body_mass_g) |>
+  group_by(species, island) |>
+  summarise(mean_mass = mean(body_mass_g))
+
+head(mass_summary)
+```
+```{r Pivot widening- Palmer Penguins}
+mass_matrix <- mass_summary |>
+  pivot_wider(
+    names_from = island,
+    values_from = mean_mass
+  )
+
+head(mass_matrix)
+```
+
+# Separating and Uniting of Different Data Tables:
+- Creating a new table; Lets call it "table3"
+```{r}
+table3
+```
+```{r Table3 - Countries - No.of Cases}
+table3 %>% 
+  separate(rate, into = c("cases", "population"))
+```
+
+(viii) We can now use the separate() function for splitting the set of values we have within our "no.of cases across each country" dataset because of the presence of non-alphanumeric characters within the tibble and 
+
+### Rewriting the code to pass different characters across separate arguments
+```{r}
+table3 %>% 
+  separate(rate, into = c("cases", "population"), sep = "/")
+
+table3 %>% 
+  separate(rate, into = c("cases", "population"), convert = TRUE)
+
+table3 %>% 
+  separate(year, into = c("century", "year"), sep = 2) # the no. 2 signifies the last two digits of each year the case was filed
+```
+### Using "unite()":
+```{r}
+## MAKING A NEW TABLE CALLED table5, uniting values such as century and year
+
+table5 %>% 
+  unite(new, century, year, sep = "")
+```
+
+# Wrangling strings and dates
+## Standardizing text using the "stringr" package
+```{r}
+library(tidyverse)
+
+# Cleaning site names across Magnetic Island
+# Help it follow a consistent pattern 
+
+messy_sites <- tibble(
+  site_id = c(" Nelly Bay", "nelly_bay", "NELLY BAY", " Geoffrey_Bay ", "geoffrey bay")
+)
+
+clean_sites <- messy_sites |>
+  mutate(
+    # 1. Convert everything to lowercase
+    site_clean = str_to_lower(site_id),
+    # 2. Replace any spaces with underscores
+    site_clean = str_replace_all(site_clean, pattern = " ", replacement = "_"),
+    # 3. Trim any leading or trailing whitespace (invisible spaces at the ends)
+    site_clean = str_trim(site_clean)
+  )
+
+print(clean_sites)
+```
+
+# Standardize time and date formats:
+Package in play: "lubridate"
+
+```{r Basic-Date-Time-Format-Application}
+library(lubridate)
+
+date_1 <- dmy("25/12/2026")
+date_2 <- ymd("2026-12-25")
+
+date_1 == date_2 # Even though the date format had changed because of the running of the package "lubridate", we see that the timeline that has been mentioned remains the same
+```
+
+```{r}
+# A tibble of raw sensor data with a messy character timestamp
+sensor_data <- tibble(
+  raw_time = c("14-05-2026 08:30:00", "14-05-2026 08:45:00", "14-05-2026 09:00:00"),
+  temperature = c(24.5, 24.6, 24.4)
+)
+
+# Converting character strings to true POSIXct datetime objects
+sensor_clean <- sensor_data |>
+  mutate(
+    true_time = dmy_hms(raw_time)
+  )
+
+print(sensor_clean)
+```
+
