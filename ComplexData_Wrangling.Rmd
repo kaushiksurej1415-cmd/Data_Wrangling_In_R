@@ -55,7 +55,7 @@ Resolving the issues that you find within the dataset and these issues can can b
 Function used; tidyr:pivot_longer()
 Grouping function in play: facet_wrap()
 
-(iii) The pivot_longer() funtions in such a way that it splits the dataset in hand by columns and reformats into observations as rows, columns as variables and values as cell entries
+(iii) The pivot_longer() functions in such a way that it splits the dataset in hand by columns and re-formats into observations as rows, columns as variables and values as cell entries
 
 ```{r Billboard-Dataset-Songs-From-The-Year-2000}
 billboard
@@ -103,4 +103,81 @@ df <- tribble(
 ```
  - The example that was run within the previous code chunk shows that a dataset named "df" was created by us.
  
- 
+```{r}
+df |> 
+  pivot_longer(
+    cols = bp1:bp2,
+    names_to = "measurement",
+    values_to = "value"
+  )
+```
+(v) The tibble which was created based on the line of code which was run, shows us that a dataset named "df" has been made with a real-time values in place
+
+# Widening of Datasets
+Function used: pivot_wider()
+
+(vi) "pivot_wider()" as a function helps us handle a variety of observations across messy or inconsistent datasheets or datasets scattered across multiple rows. 
+
+```{r Ex: CMS-Patient-Experience}
+cms_patient_experience
+```
+
+A tibble with over 500 rows and a single was made. To make it much more pleasing to the eye of the programmer and to the structuring of the stats, let's create more rows based on the organization they fall under.
+```{r}
+cms_patient_experience |> 
+  distinct(measure_cd, measure_title)
+
+# Using the pivot_wider() function
+cms_patient_experience |> 
+  pivot_wider(
+    names_from = measure_cd,
+    values_from = prf_rate
+  )
+```
+
+- Even though the data looks a bit more consistent, we still have about 500 rows of data. To minimize the amount of time that is required to work with a somewhat large dataset such as this, let us reintroduce "pivot_wider()" again, to show the presence of columns that have values that are unique to each row, making it easier to identify
+
+(vii) The identification of these rows can be done by looking at the name that we have given called "org", short for "organizations"
+
+```{r CMS-Patient-Experience-Ex-Continuation}
+cms_patient_experience |> 
+  pivot_wider(
+    id_cols = starts_with("org"),
+    names_from = measure_cd,
+    values_from = prf_rate
+  )
+```
+
+- Reworking with the "df" dataset, but with the "pivot_wider()" function this time
+
+```{r df-widening}
+df <- tribble(
+  ~id, ~measurement, ~value,
+  "A",        "bp1",    100,
+  "B",        "bp1",    140,
+  "B",        "bp2",    115, 
+  "A",        "bp2",    120,
+  "A",        "bp3",    105
+)
+
+df |> 
+  pivot_wider(
+    names_from = measurement,
+    values_from = value
+  )
+
+
+df |> 
+  distinct(measurement) |> # Creating a new column which will show the unique values of measurement
+  pull()
+
+df |> 
+  select(-measurement, -value) |> 
+  distinct()
+
+df |> 
+  select(-measurement, -value) |> 
+  distinct() |> 
+  mutate(x = NA, y = NA, z = NA) # Combining the results that we wanted and generating an empty dataframe with only NA values at the end of the day
+```
+
