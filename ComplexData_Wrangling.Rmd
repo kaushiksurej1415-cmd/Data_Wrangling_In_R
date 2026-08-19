@@ -316,4 +316,122 @@ sensor_clean <- sensor_data |>
 
 print(sensor_clean)
 ```
+# Joining Tables: Relational Data
+(ix) Multiple tables that share a common data entry point have been known to provide several mutating joins with the help of the "dplyr" package
 
+- Example used: A massive daily fish catch table with the only record on display being the construction of a list called "site_code", with a smaller, separate table consisting of metadata such as the GPS coordinates and the zoning status for these site codes.
+
+```{r Fish-Catch-Data}
+# Table 1: Biological observation data
+observations <- tibble(
+  site_code = c("NB", "GB", "MI", "NB", "HB"),
+  species = c("Trout", "Snapper", "Trout", "Cod", "Trout"),
+  count = c(5, 2, 1, 3, 8)
+)
+
+# Table 2: Spatial metadata
+site_metadata <- tibble(
+  site_code = c("NB", "GB", "MI", "RP", "WP"),
+  zone = c("Marine National Park", "Conservation Park", "Habitat Protection", "General Use", "Other Use"),
+  lat = c(-19.16, -19.15, -19.14, -19.12, -19.11)
+)
+
+# Joining the metadata to the biological observation table using the "left_join()" and the "right_join()" functions
+joined_data <- observations |>
+  left_join(site_metadata, by = join_by(site_code))
+
+print(joined_data)
+
+# Running an "inner_join()" function to keep only those set of rows which match across both the tables
+matched_data <- observations |>
+  inner_join(site_metadata, by = join_by(site_code))
+glimpse(matched_data)
+
+# The use of "anti_join()" to show the presence of rows that do not match with the once found within the metadata table
+missing_context <- observations |>
+  anti_join(site_metadata, by = join_by(site_code))
+```
+
+# Understanding the need to having missing values handled
+
+- "NA" (missing data) values are a part and parcel of data science
+- The occurrence of situations such as these can be due to a variety of factors which might have halted the process of data collection and sampling
+- Other times, cells are left as zeroes deliberately because of various other factors such as time in play
+- The other likely scenario as to why we might encounter our progress being halted due to a missing value would be the occurrence from our end, while trying to calculate the numerical we have in our hand, leading to the appraisal human biases
+
+## Conversion of legacy errors 
+(x) Function used: "na_if()"; This particular function provided by the "dplyr" package converts the values that we are not interested in, into NA/missing values. This makes it an extremely useful tool for the purpose of data cleaning
+```{r Reading data from an old temperature logger}
+logger_data <- tibble(
+  depth_m = c(10, 20, 30, 40),
+  temp_c = c(24.5, 24.1, -999, 23.5)) # -999 is a known sensor error code
+
+## Converting the -999 error code into a true NA value
+fixed_logger <- logger_data |>
+  mutate(temp_c = na_if(temp_c, -999))
+
+print(fixed_logger)
+```
+
+## Replacing missing values with coalesce()
+(xi) "coalesce()" helps us figure out the specific set of NA value(s) that messes with our dataset, segregate its column and replace the NA value with a 0
+
+```{r Shark-Counts-Across-3-Separate-Reefs}
+shark_counts <- tibble(
+  site = c("Reef_A", "Reef_B", "Reef_C"),
+  shark_count = c(3, NA, 5))
+
+# Replacing NA with 0
+shark_fixed <- shark_counts |>
+  mutate(shark_count = coalesce(shark_count, 0))
+
+print(shark_fixed)
+```
+### What is NaN (Not a Number)?
+- NaN is nothing but a value within the space of programming and data analysis which has a value that is mathematically impossible
+```{r NaN-Example}
+cpue_data <- tibble(
+  site = c("Bay_1", "Bay_2"),
+  catch = c(10, 0),
+  effort_hours = c(2, 0))
+
+# Calculating CPUE (catch / effort)
+cpue_calc <- cpue_data |>
+  mutate(
+    cpue = catch / effort_hours)
+
+print(cpue_calc)
+```
+
+# Implicit missing data/values:
+```{r Raw-Catch-Log; Coral-Trout-spp.}
+
+raw_catch <- tibble(
+  site = c("Reef_1", "Reef_1", "Reef_2"),
+  species = c("Pmaculatus", "Pleopardus", "Pmaculatus"),
+  count = c(5, 2, 8))
+
+# Force inclusion of hidden zero-catch data
+full_catch_matrix <- raw_catch |>
+  complete(site, species, fill = list(count = 0))
+
+print(full_catch_matrix)
+```
+
+#### Dropping the NA value, when not needed :)
+
+(xii) If  a failed instrument reading or a random numeric value causes a severe implication to the data that you have collected, run the "drop_na()" function and remove the entire row that has caused a variable shift within the dataset that you had previously worked on
+
+```{r}
+sensor_log <- tibble(
+  day = 1:4,
+  salinity = c(35.2, 35.1, NA, 35.3)
+)
+
+# Remove any row where salinity is missing
+clean_log <- sensor_log |>
+  drop_na(salinity)
+```
+
+
+## Exercises: Palmer Penguins- Use Pivots and Relational Data
