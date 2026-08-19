@@ -1,0 +1,106 @@
+---
+title: "ComplexData_Wrangling"
+author: "Kaushik Surej"
+date: "2026-08-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load the set of packages you want
+```{r}
+library(tidyverse)
+```
+
+## Tidying Data: Creation of Tibbles
+```{r Solving-Examples: No.of cases across different countries}
+table1 %>% 
+  mutate(rate = cases / population * 10000)
+
+# Title of the table: Table 1
+```
+- Based on the previously constructed table, aptly named table 1, we see that the work of a table helps with the filtering and summarizing of data, along with the structuring of functions such as group or color can be sorted  
+
+- A dataframe of this type can help us use functions like group or color in ggplot 2.
+
+```{r Continuing-with-the-example}
+# Compute cases per year
+table1 %>% 
+  count(year, wt = cases)
+
+# Trying to visualize these changes over time
+ggplot(table1, aes(year, cases)) + 
+  geom_line(aes(group = country), colour = "grey50") + 
+  geom_point(aes(colour = country))
+
+```
+
+# Pivoting the data to make it even more tidier
+
+## STEP 1:
+Tidying of data is a process where you as the programmer will have to understand what each variable and observation actually refers to
+
+## STEP 2: 
+Resolving the issues that you find within the dataset and these issues can can be of two major types:
+
+- One variable spread across multiple columns
+- One observation scattered across multiple rows
+
+(i) This is where the application of "pivoting" our data comes in handy. 
+(ii) For tidying the data that we have in our hands, using of two different functions such as "tidyr: pivot_longer()" and "tidyr:pivot_widen()" will help us to lengthen and widen our data respectively.
+
+# Lengthening of Datasets
+Function used; tidyr:pivot_longer()
+Grouping function in play: facet_wrap()
+
+(iii) The pivot_longer() funtions in such a way that it splits the dataset in hand by columns and reformats into observations as rows, columns as variables and values as cell entries
+
+```{r Billboard-Dataset-Songs-From-The-Year-2000}
+billboard
+```
+
+```{r}
+# Pivoting longer applied on the billboard dataset
+
+billboard |> 
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", 
+    values_to = "rank"
+  )
+# Creation of three separate arguments in the form of "cols", "starts_with('wk')" and "values_to"
+
+billboard |> 
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", 
+    values_to = "rank",
+    values_drop_na = TRUE
+  )
+```
+
+(iv) Before we create the tibble with columns named "week" and "rank", we see that the two coloumns are in double quotation because these are the two new variables that are yet to be made and only once we make them, will we be able to input them into our preexisting Billboards dataset.
+
+```{r Billboard-Dataset-With-2-Extra-Columns}
+billboard |> 
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", 
+    values_to = "rank",
+    values_drop_na = TRUE
+  )
+```
+
+```{r Pivot-Longer-Example2}
+df <- tribble(
+  ~id,  ~bp1, ~bp2,
+   "A",  100,  120,
+   "B",  140,  115,
+   "C",  120,  125
+)
+```
+ - The example that was run within the previous code chunk shows that a dataset named "df" was created by us.
+ 
+ 
