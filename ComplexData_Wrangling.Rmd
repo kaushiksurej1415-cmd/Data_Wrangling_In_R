@@ -10,8 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Load the set of packages you want
-```{r}
-library(tidyverse)
+```{r warning=FALSE}
+# library(tidyverse)
 ```
 
 ## Tidying Data: Creation of Tibbles
@@ -186,7 +186,7 @@ df |>
 ## Lengthening using pivot_longer() with facet_wrap() in play
 ```{r}
 # install.packages("palmerpenguins")
-library(palmerpenguins)
+# library(palmerpenguins)
 
 ## Creating a long version of the penguin dataset
 
@@ -436,7 +436,7 @@ clean_log <- sensor_log |>
 
 ## Exercises: Palmer Penguins- Use Pivots and Relational Data
 
-### Exercise 1: Palmer Penguins- cLEANING THE MESSY DATASET
+### Exercise 1: Palmer Penguins- CLEANING THE MESSY DATASET
 
 ```{r Cleaning-Dataset}
 island_metadata <- tibble(
@@ -448,3 +448,51 @@ island_metadata <- tibble(
 print(island_metadata)
 ```
 
+#### Construction of a clean metadata pathway
+```{r}
+## Standardizing the island names into case specificity across all three islands within the Palmer archipelago along with the trimming and trailing of the unnecessary white space created within the tibble
+
+clean_metadata <- island_metadata |>
+  mutate(
+    island_name = str_to_lower(island_name), 
+    island_name = str_trim(island_name), 
+    station_install = dmy(station_install)
+  )
+
+print(clean_metadata)
+```
+
+### Exercise 2: Palmer Penguins- CREATING A RELATIONAL JOIN BETWEEN THE METADATA TABLE AND THE BIOLOGICAL DATA TABLE
+```{r Relational_Join-Palmer_Penguins}
+
+# Aligning the two columns which show the presence of islands that the penguins are found in
+clean_metadata <- clean_metadata |>
+  mutate(island_name = str_to_title(island_name))
+
+# Left join to make sure that every penguin seen within the dataset have been attached to the island metadata datasheet
+penguin_spatial <- penguins |>
+  left_join(clean_metadata, by = join_by(island == island_name))
+
+# Check and see if these changes have worked
+head(penguin_spatial)
+glimpse(penguin_spatial)
+```
+
+### Exercise 3: Palmer Penguins- USING A WIDE SUMMARY MATRIX TO SHOW THE MAXIMUM BODY MASS OF EACH PENGUIN SPECIE ACROSS THE 3 PALMER ISLANDS
+```{r Wide-Summary-Matrix; Maximum-Body-Mass}
+max_mass_summary <- penguin_spatial|>
+  drop_na(body_mass_g)|>
+  group_by(species, island)|>
+  summarize(max_mass = max(body_mass_g), .groups = "drop")
+
+head(max_mass_summary)
+
+# Pivot wider function to be applied; This will help us create columns for islands and rows for species
+max_mass_matrix <- max_mass_summary|>
+  pivot_wider(
+    names_from = island,
+    values_from = max_mass
+  )
+
+head(max_mass_matrix)
+```
